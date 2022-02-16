@@ -6,6 +6,8 @@ import Navbar from "../ui/Navbar";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import CalendarEvent from "./CalendarEvent";
 import CalendarModal from "./CalendarModal";
+import { useDispatch } from "react-redux";
+import { openModal } from "../../redux/actions/ui";
 
 // Setup the localizer by providing the moment (or globalize) Object
 // to the correct localizer.
@@ -29,8 +31,11 @@ const CalendarScreen = () => {
     localStorage.getItem("lastView") || "month"
   );
 
+  const dispatch = useDispatch();
+
   const onDoubleClick = (e) => {
     console.log(e);
+    dispatch(openModal());
   };
 
   const onSelectEvent = (e) => {
