@@ -40,8 +40,6 @@ const CalendarModal = () => {
   };
 
   const handleCloseModal = () => {
-    //TODO: cerrar el modal
-
     dispatch(closeModal());
   };
 
