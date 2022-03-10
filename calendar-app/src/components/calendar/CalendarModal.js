@@ -1,10 +1,15 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import Modal from "react-modal";
 import DateTimePicker from "react-datetime-picker";
 import moment from "moment";
 import Swal from "sweetalert2";
 import { useDispatch, useSelector } from "react-redux";
 import { closeModal } from "../../redux/actions/ui";
+import {
+  eventAddNew,
+  eventClearActiveEvent,
+  eventUpdated,
+} from "../../redux/actions/events";
 const customStyles = {
   content: {
     top: "50%",
@@ -19,20 +24,23 @@ const customStyles = {
 Modal.setAppElement("#root");
 const now = moment().minutes(0).seconds(0).add(1, "hours");
 
+const initEvent = {
+  title: "",
+  notes: "",
+  start: now.toDate(),
+  end: now.add(1, "hours").toDate(),
+};
+
 const CalendarModal = () => {
   const [startDate, setStartDate] = useState(now.toDate());
   const [endDate, setEndDate] = useState(now.add(1, "hours").toDate());
   const [validTitle, setValidTitle] = useState(true);
   const { modalOpen } = useSelector((state) => state.ui);
+  const { activeEvent } = useSelector((state) => state.calendar);
 
   const dispatch = useDispatch();
 
-  const [formValues, setFormValues] = useState({
-    title: "Event",
-    notes: "",
-    start: now.toDate(),
-    end: now.add(1, "hours").toDate(),
-  });
+  const [formValues, setFormValues] = useState(initEvent);
 
   const { title, notes, start, end } = formValues;
   const handleChange = ({ target }) => {
@@ -41,6 +49,8 @@ const CalendarModal = () => {
 
   const handleCloseModal = () => {
     dispatch(closeModal());
+    dispatch(eventClearActiveEvent());
+    setFormValues(initEvent);
   };
 
   const onChange = (e) => {
@@ -52,6 +62,14 @@ const CalendarModal = () => {
     setEndDate(e);
     setFormValues({ ...formValues, end: e });
   };
+
+  useEffect(() => {
+    if (activeEvent) {
+      setFormValues(activeEvent);
+    } else {
+      setFormValues(initEvent);
+    }
+  }, [activeEvent, setFormValues]);
 
   const handleSave = (e) => {
     e.preventDefault();
@@ -69,6 +87,20 @@ const CalendarModal = () => {
       return setValidTitle(false);
     }
     //TODO: realizar la grabacion en la bd
+    if (activeEvent) {
+      dispatch(eventUpdated(formValues));
+    } else {
+      dispatch(
+        eventAddNew({
+          ...formValues,
+          id: new Date().getTime(),
+          user: {
+            _id: "123",
+            name: "Manuel",
+          },
+        })
+      );
+    }
     setValidTitle(true);
     handleCloseModal();
   };
@@ -83,7 +115,7 @@ const CalendarModal = () => {
       className="modal"
       overlayClassName="modal-fondo"
     >
-      <h1> Nuevo evento </h1>
+      {activeEvent ? <h1> Update event</h1> : <h1> Nuevo evento </h1>}
       <hr />
       <form className="container" onSubmit={handleSave}>
         <div className="form-group">
